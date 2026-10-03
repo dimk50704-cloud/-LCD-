@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>傳說結晶隨機生成｜V0.51</title><style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #f3eefb;
+      color: #39304d;
+      font:
+        15px "Microsoft JhengHei",
+        sans-serif;
+    }
+    main {
+      max-width: 1450px;
+      margin: 22px auto;
+      padding: 0 18px;
+    }
+    section,
+    .card {
+      background: #fff;
+      border: 1px solid #e2d5fb;
+      border-radius: 22px;
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      font-size: 25px;
+      margin: 0 0 8px;
+    }
+    h2 {
+      font-size: 21px;
+      margin: 0;
+    }
+    p {
+      color: #827492;
+      line-height: 1.7;
+    }
+    .base {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+    }
+    label {
+      font-size: 13px;
+      color: #827492;
+    }
+    input,
+    select {
+      font: inherit;
+      color: #39304d;
+      background: white;
+      border: 1px solid #dac8f6;
+      border-radius: 12px;
+      padding: 10px;
+      width: 100%;
+      min-width: 0;
+    }
+    label input {
+      margin-top: 7px;
+    }
+    button {
+      font: inherit;
+      border: 1px solid #dac8f6;
+      border-radius: 10px;
+      padding: 10px 16px;
+      background: white;
+      color: #7952bb;
+      cursor: pointer;
+    }
+    button.primary {
+      background: #8254c9;
+      color: white;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: wait;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 355px;
+      gap: 18px;
+    }
+    .heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+    .buttons {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+    .tablewrap {
+      overflow: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 740px;
+    }
+    th {
+      text-align: left;
+      background: #f5effc;
+      color: #78678b;
+      font-size: 13px;
+      font-weight: 400;
+      padding: 12px;
+    }
+    td {
+      padding: 10px 7px;
+      border-bottom: 1px solid #eee4fb;
+    }
+    td.num {
+      width: 55px;
+      text-align: center;
+      font-weight: bold;
+      color: #76658a;
+    }
+    td.num.chosen {
+      background: #8254c9;
+      color: white;
+    }
+    td.kind {
+      width: 80px;
+    }
+    td.val {
+      width: 85px;
+    }
+    .muted {
+      font-size: 13px;
+      color: #827492;
+    }
+    .status {
+      min-height: 26px;
+      margin: 10px 0;
+      color: #7952bb;
+    }
+    .result {
+      position: sticky;
+      top: 16px;
+      align-self: start;
+    }
+    .big {
+      font-size: 34px;
+      font-weight: bold;
+      margin: 8px 0;
+    }
+    .boxes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .box {
+      border: 1px solid #e2d5fb;
+      border-radius: 18px;
+      padding: 16px;
+      margin: 12px 0;
+    }
+    .ratio {
+      font-size: 27px;
+      margin: 12px 0;
+    }
+    .pill {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 20px;
+      font-size: 13px;
+      background: #fae9ef;
+      color: #b83e64;
+    }
+    .pill.yes {
+      background: #e0f5ed;
+      color: #23795c;
+    }
+    .pill.try {
+      background: #fff0d6;
+      color: #9c6818;
+    }
+    .stat {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid #eee4fb;
+      padding: 12px 0;
+    }
+    .note {
+      border: 1px dashed #dac8f6;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      color: #827492;
+      line-height: 1.7;
+    }
+    @media (max-width: 1000px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .result {
+        position: static;
+      }
+      .base {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    @media (max-width: 550px) {
+      .base {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      main {
+        padding: 10px;
+        margin: 0;
+      }
+      section,
+      .card {
+        padding: 15px;
+      }
+    }
+    .gearline {
+      display: grid;
+      grid-template-columns: 140px 1fr 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+    .gearline .box {
+      margin: 0 0 12px;
+      padding: 14px;
+    }
+    .gearline p {
+      margin: 8px 0;
+    }
+    .levelbox select {
+      padding: 8px;
+    }
+    @media (max-width: 650px) {
+      .gearline {
+        grid-template-columns: 1fr;
+      }
+      .levelbox {
+        max-width: 180px;
+      }
+    }
+  
+
+body{font-size:16px}label,.muted,th,.note,.pill{font-size:14px}main{min-width:0}section{min-width:0}.site-nav{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}.site-nav a{display:block;text-decoration:none;color:#7952bb;background:#fff;border:1px solid #dac8f6;border-radius:10px;padding:12px 18px;font-weight:bold}.site-nav a[aria-current=page]{background:#8254c9;color:#fff;border-color:#8254c9}.site-nav a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #ae83ea;outline-offset:3px}.site-footer{text-align:center;font-size:14px;color:#756384;padding:12px 0 20px;line-height:1.7}.stat{gap:10px}.stat span:last-child{text-align:right;overflow-wrap:anywhere}.big{overflow-wrap:anywhere}#selected{overflow-wrap:anywhere}.buttons label{display:flex;flex-direction:column;gap:6px}.buttons select{margin:0}input[readonly]{background:#f5effc;color:#7952bb}@media(max-width:550px){.site-nav a{padding:10px 12px}.boxes{grid-template-columns:1fr}.box{padding:14px}.site-footer{font-size:14px}}
+</style></head>
+<body><main><nav class="site-nav" aria-label="頁面切換"><a href="index.html">24顆結晶最佳化</a><a href="generator.html" aria-current="page">傳說結晶生成</a></nav>
+    <section>
+      <h1>傳說結晶隨機生成</h1>
+      <p>
+        可選擇42-60個結晶生成，另有三排詞條可指定生成內容
+      </p>
+      <div class="buttons" style="align-items: center">
+        <label
+          >生成數量
+          <select id="count"></select></label
+        ><button id="generate" class="primary">隨機生成</button
+        ><label
+          >指定詞條①
+          <select id="force0"></select></label
+        ><label
+          >指定詞條②
+          <select id="force1"></select></label
+        ><label
+          >指定詞條③
+          <select id="force2"></select></label
+        ><button id="sendSelected" class="primary">儲存勾選並前往最佳化</button><button id="export">匯出全部</button
+        ><button id="exportSelected">匯出勾選結晶</button>
+      </div>
+      <p id="status" role="status" aria-live="polite"></p>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>選取</th>
+              <th>#</th>
+              <th>階級</th>
+              <th>第一排</th>
+              <th>數值</th>
+              <th>第二排</th>
+              <th>數值</th>
+              <th>原始評分</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+
+    </section>
+  <footer class="site-footer">版本 V0.51｜更新時間 <time datetime="2026-10-03T17:03+08:00">2026/10/03 17:03</time>（台灣時間）</footer></main>
+<script>
+
+const types=[['','未使用',0,0,1],['crit','爆擊機率',14,16,1],['dmg','爆擊傷害',10,14,1],['mastery','熟練度',7,11,1],['hp','最大HP',300,500,1],['hpp','最大HP%',5,8,1],['magic','魔力',200,400,10],['mp','魔攻%',3,5,1],['cd','冷卻時間減免',2,2,1]];
+const storageScope='lcd-crystal-v05:'+new URL('.',location.href).pathname;
+const transferKey=storageScope+':selected', pendingKey=storageScope+':pending', gearKey=storageScope+':gear';
+function rollLine(type){const t=type?types.find(t=>t[0]===type):types[1+Math.floor(Math.random()*(types.length-1))];return {type:t[0],value:t[2]+Math.floor(Math.random()*((t[3]-t[2])/t[4]+1))*t[4]}}
+function validateLine(a,legacy=false){
+  if(!a||typeof a!=='object')throw Error('結晶詞條格式錯誤');
+  const t=types.find(t=>t[0]===a.type);
+  if(!t||!Number.isFinite(a.value))throw Error('結晶詞條或數值錯誤');
+  let value=a.value;
+  if(legacy&&a.type==='cd'&&value===1)value=2;
+  if(value<t[2]||value>t[3]||!Number.isInteger((value-t[2])/t[4]))throw Error(t[1]+'數值須為'+(t[2]===t[3]?t[2]:t[2]+'～'+t[3])+(t[4]>1?'，每'+t[4]+'一格':''));
+  return {type:a.type,value};
+}
+function validateCrystals(c,legacy=false){
+  if(!Array.isArray(c)||c.length<1||c.length>24)throw Error('請提供1～24顆結晶');
+  return c.map((r,i)=>{if(!Array.isArray(r)||r.length!==2)throw Error('第'+(i+1)+'顆結晶必須有兩排詞條');return r.map(a=>validateLine(a,legacy))});
+}
+
+
+    const el = (id) => document.getElementById(id);
+    let crystals = [],
+      guaranteed = [],
+      selected = new Set();
+    el("count").innerHTML = Array.from(
+      { length: 19 },
+      (_, i) => `<option value="${i + 42}">${i + 42}顆</option>`,
+    ).join("");
+    el("count").value = "42";
+    for (let i = 0; i < 3; i++)
+      el("force" + i).innerHTML = types
+        .map(
+          (t) => `<option value="${t[0]}">${t[0] ? t[1] : "不指定"}</option>`,
+        )
+        .join("");
+    function roll(type) { return rollLine(type); }
+    function generate() {
+      selected.clear();
+      crystals = Array.from({ length: Number(el("count").value) }, () => [
+        roll(),
+        roll(),
+      ]);
+      guaranteed = [];
+      let slots = Array.from({ length: crystals.length * 2 }, (_, i) => i);
+      for (let j = 0; j < 3; j++) {
+        const t = el("force" + j).value;
+        if (!t) continue;
+        const pos = slots.splice(
+          Math.floor(Math.random() * slots.length),
+          1,
+        )[0];
+        crystals[Math.floor(pos / 2)][pos % 2] = roll(t);
+        guaranteed.push(pos);
+      }
+      render();
+      el("status").textContent =
+        `已生成${crystals.length}顆結晶，共${crystals.length * 2}排詞條。已勾選0／24顆。`;
+    }
+    const cdRatios = [
+      1, 1.0194, 1.041929179095487, 1.0683, 1.0994, 1.137, 1.1578,
+      1.1811, 1.2071, 1.2364,
+    ];
+    function crystalPower(c) {
+      const a = {
+        magic: 0,
+        mp: 0,
+        mastery: 0,
+        crit: 0,
+        dmg: 0,
+        cd: 0,
+      };
+      c.forEach((line) => {
+        if (line.type in a) a[line.type] += Number(line.value) || 0;
+      });
+      const magic = Math.floor((8070 + a.magic) * (1 + a.mp / 100) + 1e-9);
+      const crit = Math.min(100, 30 + a.crit) / 100;
+      const critDmg = (193 + a.dmg) / 100;
+      const cd = Math.min(9, a.cd);
+      const lo = Math.floor(cd),
+        hi = Math.ceil(cd);
+      const cdFactor =
+        cdRatios[lo] + (cdRatios[hi] - cdRatios[lo]) * (cd - lo);
+      return (
+        magic *
+        (45 + a.mastery * 0.075) *
+        (1 + crit * (critDmg - 1)) *
+        cdFactor
+      );
+    }
+    const basePower = crystalPower([]);
+    function originalScore(c) {
+      return (crystalPower(c) / basePower - 1) * 100 - 5;
+    }
+    function scoreCell(c) {
+      const score = originalScore(c);
+      const color = score >= 5 ? "#23805e" : score >= 0 ? "#7952bb" : "#c84f68";
+      return `<td style="font-weight:bold;color:${color}">${score >= 0 ? "+" : ""}${score.toFixed(1)}</td>`;
+    }
+    function render() {
+      el("rows").innerHTML = crystals
+        .map(
+          (c, i) =>
+            `<tr><td><input type="checkbox" data-i="${i}" aria-label="選取結晶${i + 1}" style="width:20px;height:20px"></td><td class="num">#${i + 1}</td><td>傳說</td>${c.map((a, j) => `<td style="${guaranteed.includes(i * 2 + j) ? "background:#eee4fb;color:#7952bb;font-weight:bold" : ""}">${types.find((t) => t[0] === a.type)[1]}</td><td>${a.value}${["crit", "dmg", "mastery", "hpp", "mp"].includes(a.type) ? "%" : a.type === "cd" ? "秒" : ""}</td>`).join("")}${scoreCell(c)}</tr>`,
+        )
+        .join("");
+    }
+    el("rows").onchange = (e) => {
+      const i = Number(e.target.dataset.i);
+      if (e.target.checked) {
+        if (selected.size >= 24) {
+          e.target.checked = false;
+          el("status").textContent = "最多勾選24顆，以供最佳化頁匯入。";
+          return;
+        }
+        selected.add(i);
+      } else selected.delete(i);
+      el("status").textContent =
+        `持有${crystals.length}顆結晶｜已勾選${selected.size}／24顆。`;
+    };
+    function download(c, name) {
+      const blob = new Blob(
+        [JSON.stringify({ schema: "lcd-crystals-1", crystals: c }, null, 2)],
+        { type: "application/json" },
+      );
+      const u = URL.createObjectURL(blob),
+        a = document.createElement("a");
+      a.href = u;
+      a.download = name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(u), 1000);
+    }
+    el("generate").onclick = generate;
+    el("export").onclick = () =>
+      download(crystals, "crystals_pool_" + crystals.length + ".json");
+    el("exportSelected").onclick = () => {
+      if (!selected.size) {
+        el("status").textContent = "請先勾選要匯出的結晶，最多24顆。";
+        return;
+      }
+      download(
+        [...selected].sort((a, b) => a - b).map((i) => crystals[i]),
+        "crystals_selected_" + selected.size + ".json",
+      );
+    };
+    el('sendSelected').onclick=()=>{
+      if(!selected.size){el('status').textContent='請先勾選要載入的結晶，最多24顆。';return}
+      try{const c=[...selected].sort((a,b)=>a-b).map(i=>crystals[i]);validateCrystals(c);localStorage.setItem(transferKey,JSON.stringify({schema:'lcd-crystals-1',crystals:c}));localStorage.setItem(pendingKey,'1');location.href='index.html'}catch(e){el('status').textContent='儲存失敗：'+e.message+'。可改用「匯出勾選結晶」。'}
+    };
+    generate();
+  
+</script></body></html>
