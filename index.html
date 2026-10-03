@@ -16,7 +16,7 @@ function rollLine(type){const t=type?types.find(t=>t[0]===type):types[1+Math.flo
 function validateLine(a,legacy=false){
   if(!a||typeof a!=='object')throw Error('結晶詞條格式錯誤');
   const t=types.find(t=>t[0]===a.type);
-  if(!t||!Number.isFinite(a.value))throw Error('結晶詞條或數值錯誤');
+  if(!t||!Number.isFinite(a.value))throw Error('結晶詞條或數值錯誤'); 
   let value=a.value;
   if(legacy&&a.type==='cd'&&value===1)value=2;
   if(value<t[2]||value>t[3]||!Number.isInteger((value-t[2])/t[4]))throw Error(t[1]+'數值須為'+(t[2]===t[3]?t[2]:t[2]+'～'+t[3])+(t[4]>1?'，每'+t[4]+'一格':''));
