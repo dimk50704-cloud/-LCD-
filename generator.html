@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-Hant">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>傳說結晶隨機生成｜V0.51</title><style>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>傳說結晶隨機生成｜V0.52</title><style>
     * {
       box-sizing: border-box;
     }
@@ -246,6 +246,7 @@
   
 
 body{font-size:16px}label,.muted,th,.note,.pill{font-size:14px}main{min-width:0}section{min-width:0}.site-nav{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}.site-nav a{display:block;text-decoration:none;color:#7952bb;background:#fff;border:1px solid #dac8f6;border-radius:10px;padding:12px 18px;font-weight:bold}.site-nav a[aria-current=page]{background:#8254c9;color:#fff;border-color:#8254c9}.site-nav a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #ae83ea;outline-offset:3px}.site-footer{text-align:center;font-size:14px;color:#756384;padding:12px 0 20px;line-height:1.7}.stat{gap:10px}.stat span:last-child{text-align:right;overflow-wrap:anywhere}.big{overflow-wrap:anywhere}#selected{overflow-wrap:anywhere}.buttons label{display:flex;flex-direction:column;gap:6px}.buttons select{margin:0}input[readonly]{background:#f5effc;color:#7952bb}@media(max-width:550px){.site-nav a{padding:10px 12px}.boxes{grid-template-columns:1fr}.box{padding:14px}.site-footer{font-size:14px}}
+.selection-summary{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 24px;margin:16px 0;line-height:1.7;color:#827492}.selection-summary #currentCrit{color:#7952bb;font-weight:bold}
 </style></head>
 <body><main><nav class="site-nav" aria-label="頁面切換"><a href="index.html">24顆結晶最佳化</a><a href="generator.html" aria-current="page">傳說結晶生成</a></nav>
     <section>
@@ -270,7 +271,7 @@ body{font-size:16px}label,.muted,th,.note,.pill{font-size:14px}main{min-width:0}
         ><button id="sendSelected" class="primary">儲存勾選並前往最佳化</button><button id="export">匯出全部</button
         ><button id="exportSelected">匯出勾選結晶</button>
       </div>
-      <p id="status" role="status" aria-live="polite"></p>
+      <div class="selection-summary" role="status" aria-live="polite"><span id="status"></span><span id="currentCrit"></span></div>
       <div class="tablewrap">
         <table>
           <thead>
@@ -290,7 +291,7 @@ body{font-size:16px}label,.muted,th,.note,.pill{font-size:14px}main{min-width:0}
       </div>
 
     </section>
-  <footer class="site-footer">版本 V0.51｜更新時間 <time datetime="2026-10-03T17:03+08:00">2026/10/03 17:03</time>（台灣時間）</footer></main>
+  <footer class="site-footer">版本 V0.52｜更新時間 <time datetime="2026-10-03T17:38+08:00">2026/10/03 17:38</time>（台灣時間）</footer></main>
 <script>
 
 const types=[['','未使用',0,0,1],['crit','爆擊機率',14,16,1],['dmg','爆擊傷害',10,14,1],['mastery','熟練度',7,11,1],['hp','最大HP',300,500,1],['hpp','最大HP%',5,8,1],['magic','魔力',200,400,10],['mp','魔攻%',3,5,1],['cd','冷卻時間減免',2,2,1]];
@@ -327,6 +328,32 @@ function validateCrystals(c,legacy=false){
           (t) => `<option value="${t[0]}">${t[0] ? t[1] : "不指定"}</option>`,
         )
         .join("");
+
+    const generatorKey=storageScope+':generator';
+    const baseCrit=30;
+    function updateSummary(message){
+      el('status').textContent=message||`持有${crystals.length}顆結晶｜已勾選${selected.size}／24顆。`;
+      const crit=[...selected].reduce((sum,i)=>sum+crystals[i].reduce((n,a)=>n+(a.type==='crit'?a.value:0),0),baseCrit);
+      el('currentCrit').textContent=`目前爆擊機率 ${crit}%`+(crit>100?'（有效100%）':'');
+    }
+    function saveGenerator(){
+      try{
+        localStorage.setItem(generatorKey,JSON.stringify({schema:'lcd-generator-1',count:Number(el('count').value),forces:[0,1,2].map(i=>el('force'+i).value),crystals,guaranteed,selected:[...selected]}));
+        return true;
+      }catch(e){updateSummary('保存失敗：'+e.message+'。可用「匯出全部」保留結晶。');return false}
+    }
+    function restoreGenerator(){
+      const raw=localStorage.getItem(generatorKey);if(!raw)return false;
+      const d=JSON.parse(raw);
+      if(d?.schema!=='lcd-generator-1'||!Number.isInteger(d.count)||d.count<42||d.count>60||!Array.isArray(d.crystals)||d.crystals.length<42||d.crystals.length>60||!Array.isArray(d.forces)||d.forces.length!==3||!d.forces.every(v=>types.some(t=>t[0]===v)))throw Error('生成資料格式錯誤');
+      const pool=d.crystals.map((c,i)=>{if(!Array.isArray(c)||c.length!==2)throw Error('第'+(i+1)+'顆結晶格式錯誤');return c.map(a=>validateLine(a))});
+      const validIndexes=(arr,limit,max)=>Array.isArray(arr)&&arr.length<=limit&&new Set(arr).size===arr.length&&arr.every(i=>Number.isInteger(i)&&i>=0&&i<max);
+      if(!validIndexes(d.guaranteed,3,pool.length*2)||!validIndexes(d.selected,24,pool.length))throw Error('勾選或指定詞條資料格式錯誤');
+      crystals=pool;guaranteed=d.guaranteed;selected=new Set(d.selected);
+      el('count').value=String(d.count);d.forces.forEach((v,i)=>el('force'+i).value=v);
+      render();updateSummary();return true;
+    }
+
     function roll(type) { return rollLine(type); }
     function generate() {
       selected.clear();
@@ -347,8 +374,8 @@ function validateCrystals(c,legacy=false){
         guaranteed.push(pos);
       }
       render();
-      el("status").textContent =
-        `已生成${crystals.length}顆結晶，共${crystals.length * 2}排詞條。已勾選0／24顆。`;
+      updateSummary(`已生成${crystals.length}顆結晶，共${crystals.length * 2}排詞條。已勾選0／24顆。`);
+      saveGenerator();
     }
     const cdRatios = [
       1, 1.0194, 1.041929179095487, 1.0683, 1.0994, 1.137, 1.1578,
@@ -394,22 +421,23 @@ function validateCrystals(c,legacy=false){
       el("rows").innerHTML = crystals
         .map(
           (c, i) =>
-            `<tr><td><input type="checkbox" data-i="${i}" aria-label="選取結晶${i + 1}" style="width:20px;height:20px"></td><td class="num">#${i + 1}</td><td>傳說</td>${c.map((a, j) => `<td style="${guaranteed.includes(i * 2 + j) ? "background:#eee4fb;color:#7952bb;font-weight:bold" : ""}">${types.find((t) => t[0] === a.type)[1]}</td><td>${a.value}${["crit", "dmg", "mastery", "hpp", "mp"].includes(a.type) ? "%" : a.type === "cd" ? "秒" : ""}</td>`).join("")}${scoreCell(c)}</tr>`,
+            `<tr><td><input type="checkbox" data-i="${i}" ${selected.has(i)?"checked":""} aria-label="選取結晶${i + 1}" style="width:20px;height:20px"></td><td class="num">#${i + 1}</td><td>傳說</td>${c.map((a, j) => `<td style="${guaranteed.includes(i * 2 + j) ? "background:#eee4fb;color:#7952bb;font-weight:bold" : ""}">${types.find((t) => t[0] === a.type)[1]}</td><td>${a.value}${["crit", "dmg", "mastery", "hpp", "mp"].includes(a.type) ? "%" : a.type === "cd" ? "秒" : ""}</td>`).join("")}${scoreCell(c)}</tr>`,
         )
         .join("");
     }
     el("rows").onchange = (e) => {
       const i = Number(e.target.dataset.i);
+      if(!Number.isInteger(i)||i<0||i>=crystals.length)return;
       if (e.target.checked) {
         if (selected.size >= 24) {
           e.target.checked = false;
-          el("status").textContent = "最多勾選24顆，以供最佳化頁匯入。";
+          updateSummary(`最多勾選24顆。持有${crystals.length}顆結晶｜已勾選${selected.size}／24顆。`);
           return;
         }
         selected.add(i);
       } else selected.delete(i);
-      el("status").textContent =
-        `持有${crystals.length}顆結晶｜已勾選${selected.size}／24顆。`;
+      updateSummary();
+      saveGenerator();
     };
     function download(c, name) {
       const blob = new Blob(
@@ -438,8 +466,9 @@ function validateCrystals(c,legacy=false){
     };
     el('sendSelected').onclick=()=>{
       if(!selected.size){el('status').textContent='請先勾選要載入的結晶，最多24顆。';return}
-      try{const c=[...selected].sort((a,b)=>a-b).map(i=>crystals[i]);validateCrystals(c);localStorage.setItem(transferKey,JSON.stringify({schema:'lcd-crystals-1',crystals:c}));localStorage.setItem(pendingKey,'1');location.href='index.html'}catch(e){el('status').textContent='儲存失敗：'+e.message+'。可改用「匯出勾選結晶」。'}
+      try{if(!saveGenerator())return;const c=[...selected].sort((a,b)=>a-b).map(i=>crystals[i]);validateCrystals(c);localStorage.setItem(transferKey,JSON.stringify({schema:'lcd-crystals-1',crystals:c}));localStorage.setItem(pendingKey,'1');location.href='index.html'}catch(e){el('status').textContent='儲存失敗：'+e.message+'。可改用「匯出勾選結晶」。'}
     };
-    generate();
+    ['count','force0','force1','force2'].forEach(id=>el(id).addEventListener('change',saveGenerator));
+    try{if(!restoreGenerator())generate()}catch(e){updateSummary('無法載入保存內容：'+e.message+'。請按「隨機生成」重新建立結晶。')}
   
 </script></body></html>
