@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-Hant">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>傳說結晶隨機生成｜V0.52</title><style>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>傳說結晶隨機生成｜V0.53</title><style>
     * {
       box-sizing: border-box;
     }
@@ -291,7 +291,7 @@ body{font-size:16px}label,.muted,th,.note,.pill{font-size:14px}main{min-width:0}
       </div>
 
     </section>
-  <footer class="site-footer">版本 V0.52｜更新時間 <time datetime="2026-10-03T17:38+08:00">2026/10/03 17:38</time>（台灣時間）</footer></main>
+  <footer class="site-footer">版本 V0.53｜更新時間 <time datetime="2026-10-03T17:48+08:00">2026/10/03 17:48</time>（台灣時間）</footer></main>
 <script>
 
 const types=[['','未使用',0,0,1],['crit','爆擊機率',14,16,1],['dmg','爆擊傷害',10,14,1],['mastery','熟練度',7,11,1],['hp','最大HP',300,500,1],['hpp','最大HP%',5,8,1],['magic','魔力',200,400,10],['mp','魔攻%',3,5,1],['cd','冷卻時間減免',2,2,1]];
@@ -321,7 +321,7 @@ function validateCrystals(c,legacy=false){
       { length: 19 },
       (_, i) => `<option value="${i + 42}">${i + 42}顆</option>`,
     ).join("");
-    el("count").value = "42";
+    el("count").value = "48";
     for (let i = 0; i < 3; i++)
       el("force" + i).innerHTML = types
         .map(
@@ -362,14 +362,13 @@ function validateCrystals(c,legacy=false){
         roll(),
       ]);
       guaranteed = [];
-      let slots = Array.from({ length: crystals.length * 2 }, (_, i) => i);
+      // Each guaranteed line uses a different crystal, with a random line slot.
+      const available = Array.from({ length: crystals.length }, (_, i) => i);
       for (let j = 0; j < 3; j++) {
         const t = el("force" + j).value;
         if (!t) continue;
-        const pos = slots.splice(
-          Math.floor(Math.random() * slots.length),
-          1,
-        )[0];
+        const crystalIndex = available.splice(Math.floor(Math.random() * available.length), 1)[0];
+        const pos = crystalIndex * 2 + Math.floor(Math.random() * 2);
         crystals[Math.floor(pos / 2)][pos % 2] = roll(t);
         guaranteed.push(pos);
       }
@@ -395,7 +394,10 @@ function validateCrystals(c,legacy=false){
       });
       const magic = Math.floor((8070 + a.magic) * (1 + a.mp / 100) + 1e-9);
       const crit = Math.min(100, 30 + a.crit) / 100;
-      const critDmg = (193 + a.dmg) / 100;
+      // Score critical damage by its relative gain at 100% critical rate.
+      // Keep the critical-rate line's existing value; actual optimization is unchanged.
+      const critDmg = 193 / 100;
+      const damageFactor = (193 + a.dmg) / 193;
       const cd = Math.min(9, a.cd);
       const lo = Math.floor(cd),
         hi = Math.ceil(cd);
@@ -405,6 +407,7 @@ function validateCrystals(c,legacy=false){
         magic *
         (45 + a.mastery * 0.075) *
         (1 + crit * (critDmg - 1)) *
+        damageFactor *
         cdFactor
       );
     }
