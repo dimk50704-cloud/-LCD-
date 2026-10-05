@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-Hant">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>傳說結晶隨機生成｜V0.53</title><style>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>傳說結晶隨機生成｜V0.55</title><style>
     * {
       box-sizing: border-box;
     }
@@ -246,13 +246,13 @@
   
 
 body{font-size:16px}label,.muted,th,.note,.pill{font-size:14px}main{min-width:0}section{min-width:0}.site-nav{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}.site-nav a{display:block;text-decoration:none;color:#7952bb;background:#fff;border:1px solid #dac8f6;border-radius:10px;padding:12px 18px;font-weight:bold}.site-nav a[aria-current=page]{background:#8254c9;color:#fff;border-color:#8254c9}.site-nav a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #ae83ea;outline-offset:3px}.site-footer{text-align:center;font-size:14px;color:#756384;padding:12px 0 20px;line-height:1.7}.stat{gap:10px}.stat span:last-child{text-align:right;overflow-wrap:anywhere}.big{overflow-wrap:anywhere}#selected{overflow-wrap:anywhere}.buttons label{display:flex;flex-direction:column;gap:6px}.buttons select{margin:0}input[readonly]{background:#f5effc;color:#7952bb}@media(max-width:550px){.site-nav a{padding:10px 12px}.boxes{grid-template-columns:1fr}.box{padding:14px}.site-footer{font-size:14px}}
-.selection-summary{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 24px;margin:16px 0;line-height:1.7;color:#827492}.selection-summary #currentCrit{color:#7952bb;font-weight:bold}
+.selection-summary{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 24px;margin:16px 0;line-height:1.7;color:#827492}.selection-summary #currentCrit{color:#7952bb;font-weight:bold}.sort-button{width:100%;padding:0;border:0;border-radius:0;background:transparent;color:inherit;text-align:left;font-size:inherit;font-weight:inherit}.sort-button:hover{color:#7952bb;text-decoration:underline}.sort-button .sort-mark{display:inline-block;min-width:1.2em;text-align:center;font-weight:bold}
 </style></head>
 <body><main><nav class="site-nav" aria-label="頁面切換"><a href="index.html">24顆結晶最佳化</a><a href="generator.html" aria-current="page">傳說結晶生成</a></nav>
     <section>
       <h1>傳說結晶隨機生成</h1>
       <p>
-        可選擇42-60個結晶生成，另有三排詞條可指定生成內容
+        可選擇40-75個結晶生成，另有三排詞條可指定生成內容
       </p>
       <div class="buttons" style="align-items: center">
         <label
@@ -283,7 +283,7 @@ body{font-size:16px}label,.muted,th,.note,.pill{font-size:14px}main{min-width:0}
               <th>數值</th>
               <th>第二排</th>
               <th>數值</th>
-              <th>原始評分</th>
+              <th><button id="sortScore" class="sort-button" type="button" aria-label="原始評分排序，目前為原始順序">原始評分 <span id="sortMark" class="sort-mark" aria-hidden="true">↕</span></button></th>
             </tr>
           </thead>
           <tbody id="rows"></tbody>
@@ -291,10 +291,10 @@ body{font-size:16px}label,.muted,th,.note,.pill{font-size:14px}main{min-width:0}
       </div>
 
     </section>
-  <footer class="site-footer">版本 V0.53｜更新時間 <time datetime="2026-10-03T17:48+08:00">2026/10/03 17:48</time>（台灣時間）</footer></main>
+  <footer class="site-footer">版本 V0.55｜更新時間 <time datetime="2026-10-05T16:30+08:00">2026/10/05 16:30</time>（台灣時間）</footer></main>
 <script>
 
-const types=[['','未使用',0,0,1],['crit','爆擊機率',14,16,1],['dmg','爆擊傷害',10,14,1],['mastery','熟練度',7,11,1],['hp','最大HP',300,500,1],['hpp','最大HP%',5,8,1],['magic','魔力',200,400,10],['mp','魔攻%',3,5,1],['cd','冷卻時間減免',2,2,1]];
+const types=[['','未使用',0,0,1],['crit','爆擊機率',14,16,1],['dmg','爆擊傷害',10,14,1],['mastery','熟練度',7,11,1],['hp','最大HP',250,500,10],['hpp','最大HP%',5,9,1],['magic','魔力',200,400,10],['mp','魔攻%',3,5,1],['cd','冷卻時間減免',2,2,1]];
 const storageScope='lcd-crystal-v05:'+new URL('.',location.href).pathname;
 const transferKey=storageScope+':selected', pendingKey=storageScope+':pending', gearKey=storageScope+':gear';
 function rollLine(type){const t=type?types.find(t=>t[0]===type):types[1+Math.floor(Math.random()*(types.length-1))];return {type:t[0],value:t[2]+Math.floor(Math.random()*((t[3]-t[2])/t[4]+1))*t[4]}}
@@ -318,8 +318,8 @@ function validateCrystals(c,legacy=false){
       guaranteed = [],
       selected = new Set();
     el("count").innerHTML = Array.from(
-      { length: 19 },
-      (_, i) => `<option value="${i + 42}">${i + 42}顆</option>`,
+      { length: 36 },
+      (_, i) => `<option value="${i + 40}">${i + 40}顆</option>`,
     ).join("");
     el("count").value = "48";
     for (let i = 0; i < 3; i++)
@@ -329,8 +329,10 @@ function validateCrystals(c,legacy=false){
         )
         .join("");
 
-    const generatorKey=storageScope+':generator';
+    const generatorKey=storageScope+':generator-v055';
     const baseCrit=30;
+    const sortModes=['original','desc','asc'];
+    let sortMode='original';
     function updateSummary(message){
       el('status').textContent=message||`持有${crystals.length}顆結晶｜已勾選${selected.size}／24顆。`;
       const crit=[...selected].reduce((sum,i)=>sum+crystals[i].reduce((n,a)=>n+(a.type==='crit'?a.value:0),0),baseCrit);
@@ -338,18 +340,18 @@ function validateCrystals(c,legacy=false){
     }
     function saveGenerator(){
       try{
-        localStorage.setItem(generatorKey,JSON.stringify({schema:'lcd-generator-1',count:Number(el('count').value),forces:[0,1,2].map(i=>el('force'+i).value),crystals,guaranteed,selected:[...selected]}));
+        localStorage.setItem(generatorKey,JSON.stringify({schema:'lcd-generator-1',count:Number(el('count').value),forces:[0,1,2].map(i=>el('force'+i).value),crystals,guaranteed,selected:[...selected],sortMode}));
         return true;
       }catch(e){updateSummary('保存失敗：'+e.message+'。可用「匯出全部」保留結晶。');return false}
     }
     function restoreGenerator(){
       const raw=localStorage.getItem(generatorKey);if(!raw)return false;
       const d=JSON.parse(raw);
-      if(d?.schema!=='lcd-generator-1'||!Number.isInteger(d.count)||d.count<42||d.count>60||!Array.isArray(d.crystals)||d.crystals.length<42||d.crystals.length>60||!Array.isArray(d.forces)||d.forces.length!==3||!d.forces.every(v=>types.some(t=>t[0]===v)))throw Error('生成資料格式錯誤');
+      if(d?.schema!=='lcd-generator-1'||!Number.isInteger(d.count)||d.count<40||d.count>75||!Array.isArray(d.crystals)||d.crystals.length<40||d.crystals.length>75||!Array.isArray(d.forces)||d.forces.length!==3||!d.forces.every(v=>types.some(t=>t[0]===v)))throw Error('生成資料格式錯誤');
       const pool=d.crystals.map((c,i)=>{if(!Array.isArray(c)||c.length!==2)throw Error('第'+(i+1)+'顆結晶格式錯誤');return c.map(a=>validateLine(a))});
       const validIndexes=(arr,limit,max)=>Array.isArray(arr)&&arr.length<=limit&&new Set(arr).size===arr.length&&arr.every(i=>Number.isInteger(i)&&i>=0&&i<max);
       if(!validIndexes(d.guaranteed,3,pool.length*2)||!validIndexes(d.selected,24,pool.length))throw Error('勾選或指定詞條資料格式錯誤');
-      crystals=pool;guaranteed=d.guaranteed;selected=new Set(d.selected);
+      crystals=pool;guaranteed=d.guaranteed;selected=new Set(d.selected);sortMode=sortModes.includes(d.sortMode)?d.sortMode:'original';
       el('count').value=String(d.count);d.forces.forEach((v,i)=>el('force'+i).value=v);
       render();updateSummary();return true;
     }
@@ -357,6 +359,7 @@ function validateCrystals(c,legacy=false){
     function roll(type) { return rollLine(type); }
     function generate() {
       selected.clear();
+      sortMode='original';
       crystals = Array.from({ length: Number(el("count").value) }, () => [
         roll(),
         roll(),
@@ -420,14 +423,36 @@ function validateCrystals(c,legacy=false){
       const color = score >= 5 ? "#23805e" : score >= 0 ? "#7952bb" : "#c84f68";
       return `<td style="font-weight:bold;color:${color}">${score >= 0 ? "+" : ""}${score.toFixed(1)}</td>`;
     }
+    function displayOrder(){
+      const order=crystals.map((_,i)=>i);
+      if(sortMode==='original')return order;
+      return order.sort((a,b)=>{
+        const delta=originalScore(crystals[b])-originalScore(crystals[a]);
+        return (sortMode==='desc'?delta:-delta)||(a-b);
+      });
+    }
+    function updateSortButton(){
+      const mark=sortMode==='desc'?'↓':sortMode==='asc'?'↑':'↕';
+      const label=sortMode==='desc'?'高分到低分':sortMode==='asc'?'低分到高分':'原始順序';
+      el('sortMark').textContent=mark;
+      el('sortScore').setAttribute('aria-label','原始評分排序，目前為'+label);
+      el('sortScore').title='目前：'+label;
+    }
     function render() {
-      el("rows").innerHTML = crystals
+      el("rows").innerHTML = displayOrder()
         .map(
-          (c, i) =>
-            `<tr><td><input type="checkbox" data-i="${i}" ${selected.has(i)?"checked":""} aria-label="選取結晶${i + 1}" style="width:20px;height:20px"></td><td class="num">#${i + 1}</td><td>傳說</td>${c.map((a, j) => `<td style="${guaranteed.includes(i * 2 + j) ? "background:#eee4fb;color:#7952bb;font-weight:bold" : ""}">${types.find((t) => t[0] === a.type)[1]}</td><td>${a.value}${["crit", "dmg", "mastery", "hpp", "mp"].includes(a.type) ? "%" : a.type === "cd" ? "秒" : ""}</td>`).join("")}${scoreCell(c)}</tr>`,
+          (i) => {
+            const c=crystals[i];
+            return `<tr><td><input type="checkbox" data-i="${i}" ${selected.has(i)?"checked":""} aria-label="選取結晶${i + 1}" style="width:20px;height:20px"></td><td class="num">#${i + 1}</td><td>傳說</td>${c.map((a, j) => `<td style="${guaranteed.includes(i * 2 + j) ? "background:#eee4fb;color:#7952bb;font-weight:bold" : ""}">${types.find((t) => t[0] === a.type)[1]}</td><td>${a.value}${["crit", "dmg", "mastery", "hpp", "mp"].includes(a.type) ? "%" : a.type === "cd" ? "秒" : ""}</td>`).join("")}${scoreCell(c)}</tr>`;
+          },
         )
         .join("");
+      updateSortButton();
     }
+    el('sortScore').onclick=()=>{
+      sortMode=sortModes[(sortModes.indexOf(sortMode)+1)%sortModes.length];
+      render();saveGenerator();
+    };
     el("rows").onchange = (e) => {
       const i = Number(e.target.dataset.i);
       if(!Number.isInteger(i)||i<0||i>=crystals.length)return;
